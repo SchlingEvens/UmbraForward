@@ -2,10 +2,13 @@
 
 #include "stdafx.h"
 #include "RenderAppBase.h"
+#include "FrameResource.h"
 
 #include "imgui.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
+
+
 
 using namespace DirectX;      //dx math
 using namespace Microsoft::WRL;   //comptr orig
@@ -15,7 +18,7 @@ class SampleTriangle :public RenderAppBase {
 public:
 	SampleTriangle(UINT weight, UINT height, std::wstring name);
 
-	// 通过 RenderAppBase 继承
+	// from RenderAppBase
 	void OnInit() override;
 	void OnUpdate() override;
 	void OnRender() override;
@@ -23,11 +26,14 @@ public:
 
 private:
 	static const UINT FrameCount = 2;    //swap chain num.
+	const int gNumFrameResources = 2;   //frame resource num,usually equal to swap chain num.
+	int m_currFrameResourceIndex = 0;   //current frame resource index.
 
 	struct Vertex {    //vertex input layout
 		XMFLOAT3 position;    
 		XMFLOAT4 color;
 	};
+
 
 	//pipeline object  
 	UINT m_rtvDescrptorSize;
@@ -36,7 +42,6 @@ private:
 	ComPtr<IDXGISwapChain3> m_swapChain;
 	ComPtr<ID3D12Device> m_device;
 	ComPtr<ID3D12Resource> m_renderTargets[FrameCount];   //swap chain's buffers
-	ComPtr<ID3D12CommandAllocator> m_commandAllocator[FrameCount];  //for each swap chain's buffer
 	ComPtr<ID3D12CommandQueue> m_commandQueue;
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12DescriptorHeap>m_rtvHeap;
@@ -46,6 +51,9 @@ private:
 	ComPtr<ID3D12DescriptorHeap>m_sampleHeap;
 	ComPtr<ID3D12PipelineState>m_pipelineState;
 	ComPtr <ID3D12GraphicsCommandList> m_commandList;
+
+	std::vector<std::unique_ptr<FrameResource>> m_frameResources;  //frame resource vector
+	FrameResource* m_currFrameResource = nullptr;  //current frame resource ptr
 
 	//App resources.
 	ComPtr<ID3D12Resource> m_vertexBuffer;
@@ -65,6 +73,7 @@ private:
 	void WaitForPreviousFrame();
 	void LoadImgui();
 	void UpdateImgui();
+	void BuildFrameResources();
 
 
 

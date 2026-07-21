@@ -3,10 +3,15 @@
   "version": "0.1.0",
   "dependencies": [
     "directx-headers",
+    "directxtk12",
+    "winpixevent",
     {
       "name": "imgui",
-      "features": ["win32-binding","dx12-binding"]
+      "features": [
+        "win32-binding",
+        "dx12-binding"
+      ]
     }
   ],
-  "builtin-baseline": "5d35de2ee8b13d0bcec328153605638a74fbbf84"
+  "builtin-baseline": "5621b1c7430a14bb9a4b6ef55d6ee700c957f9d7"
 }

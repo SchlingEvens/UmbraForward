@@ -15,6 +15,7 @@ SampleTriangle::SampleTriangle(UINT weight, UINT height, std::wstring name):
 
 void SampleTriangle::OnInit(){
 	LoadPipeline();
+	BuildFrameResources();
 	LoadAssets();
 	LoadImgui();
 }
@@ -22,6 +23,17 @@ void SampleTriangle::OnInit(){
 
 //Frame update about data
 void SampleTriangle::OnUpdate(){
+	//update curr index and curr ptr.
+	m_currFrameResourceIndex = (m_currFrameResourceIndex + 1) % gNumFrameResources;
+	m_currFrameResource = m_frameResources[m_currFrameResourceIndex].get();
+
+	//check curr frame resource is still in use by gpu or not.
+	//if fenceValue==0 ,it is pragram's first frame and not need wait.
+	if(m_currFrameResource->m_fenceValue != 0 && m_fence->GetCompletedValue() < m_currFrameResource->m_fenceValue){
+		ThrowIfFailed(m_fence->SetEventOnCompletion(m_currFrameResource->m_fenceValue, m_fenceEvent));
+		WaitForSingleObject(m_fenceEvent, INFINITE);
+	}
+
 	UpdateImgui();
 }
 
@@ -37,8 +49,10 @@ void SampleTriangle::OnRender()
 
 	ThrowIfFailed(m_swapChain->Present(1, 0));
 
-	WaitForPreviousFrame();
+	m_currFrameResource->m_fenceValue = ++m_fenceValue;
+	ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValue));
 
+	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
 void SampleTriangle::OnDestroy()
@@ -168,9 +182,6 @@ void SampleTriangle::LoadPipeline()
 		ThrowIfFailed(m_swapChain->GetBuffer(i, IID_PPV_ARGS(&m_renderTargets[i])));
 		m_device->CreateRenderTargetView(m_renderTargets[i].Get(), nullptr, rtvHandle);
 		rtvHandle.Offset(1, m_rtvDescrptorSize);
-
-		//create command allocator for each frame.
-		ThrowIfFailed(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocator[i])));
 	}
 }
 
@@ -230,7 +241,12 @@ void SampleTriangle::LoadAssets()
 	}
 
 	//create command list;
-	ThrowIfFailed(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocator->Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_commandList)));
+	ThrowIfFailed(m_device->CreateCommandList(
+		0, 
+		D3D12_COMMAND_LIST_TYPE_DIRECT, 
+		m_currFrameResource->m_commandAllocator.Get(), 
+		m_pipelineState.Get(), 
+		IID_PPV_ARGS(&m_commandList)));
 
 	//create fence and sync object.
 	{
@@ -329,14 +345,16 @@ void SampleTriangle::LoadAssets()
 		//wait commandList to excute,gpu and cpu sync.
 		WaitForPreviousFrame();
 	}
+
+		
 }
 
 
 void SampleTriangle::PopulateCommandList()
 {
 	//reset allocator and list
-	ThrowIfFailed(m_commandAllocator[m_frameIndex]->Reset());
-	ThrowIfFailed(m_commandList->Reset(m_commandAllocator[m_frameIndex].Get(), m_pipelineState.Get()));
+	ThrowIfFailed(m_currFrameResource->m_commandAllocator->Reset());
+	ThrowIfFailed(m_commandList->Reset(m_currFrameResource->m_commandAllocator.Get(), m_pipelineState.Get()));
 
 	//set pipeline state again
 	m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -447,4 +465,15 @@ void SampleTriangle::UpdateImgui() {
 
 	// 将上面声明的 UI 逻辑烘焙为底层的绘制数据
 	ImGui::Render();
+}
+
+void SampleTriangle::BuildFrameResources() {
+	//create frame resource and add to vector.
+	for (int i = 0; i < gNumFrameResources; i++) {
+		m_frameResources.push_back(std::make_unique<FrameResource>(m_device.Get(), 1, 1, 1));
+	}
+
+	//mark curr frame resource ptr.
+	m_currFrameResourceIndex = 0;
+	m_currFrameResource = m_frameResources[m_currFrameResourceIndex].get();
 }
