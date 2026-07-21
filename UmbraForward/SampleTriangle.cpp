@@ -329,6 +329,8 @@ void SampleTriangle::LoadAssets()
 		//wait commandList to excute,gpu and cpu sync.
 		WaitForPreviousFrame();
 	}
+
+		
 }
 
 
