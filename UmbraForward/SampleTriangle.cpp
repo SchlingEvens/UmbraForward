@@ -75,7 +75,7 @@ void SampleTriangle::LoadPipeline()
 {
 	UINT dxgiFactoryFlags = 0;   
 
-#if defined(_DEBUG)
+#if define(_DEBUG)
 	//enable debug layer before create device;
 	{
 		ComPtr<ID3D12Debug> debugController;
