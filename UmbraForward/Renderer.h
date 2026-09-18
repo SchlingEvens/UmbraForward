@@ -14,9 +14,9 @@ using namespace DirectX;      //dx math
 using namespace Microsoft::WRL;   //comptr orig
 
 
-class SampleTriangle :public RenderAppBase {
+class Renderer :public RenderAppBase {
 public:
-	SampleTriangle(UINT weight, UINT height, std::wstring name);
+	Renderer(UINT weight, UINT height, std::wstring name);
 
 	// from RenderAppBase
 	void OnInit() override;

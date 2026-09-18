@@ -75,8 +75,8 @@ set(APP_SOURCES
     RenderAppBase.h
     DXSampleHelper.h
     DXSampleHelper.cpp
-    SampleTriangle.cpp
-    SampleTriangle.h
+    Renderer.cpp
+    Renderer.h
     shaders.hlsl
 )
 

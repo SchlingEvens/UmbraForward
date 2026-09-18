@@ -403,6 +403,5 @@ GeometryGenerator::MeshData GeometryGenerator::CreateGeosphere(float radius, uin
 			}
 		}
 
-
 		return meshData;
 	}

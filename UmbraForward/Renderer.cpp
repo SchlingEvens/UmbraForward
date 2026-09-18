@@ -1,11 +1,11 @@
-#include "SampleTriangle.h"
+#include "Renderer.h"
 
 //don't use default old dx12 core,and use statement version.
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = ".\\"; }
 
 //
-SampleTriangle::SampleTriangle(UINT weight, UINT height, std::wstring name):
+Renderer::Renderer(UINT weight, UINT height, std::wstring name):
 	RenderAppBase(weight,height,name),
 	m_frameIndex(0),
 	m_viewport(0.0f,0.0f,static_cast<float>(weight),static_cast<float>(height)),
@@ -13,7 +13,7 @@ SampleTriangle::SampleTriangle(UINT weight, UINT height, std::wstring name):
 	m_rtvDescrptorSize(0)
 {}
 
-void SampleTriangle::OnInit(){
+void Renderer::OnInit(){
 	LoadPipeline();
 	BuildFrameResources();
 	LoadAssets();
@@ -22,7 +22,7 @@ void SampleTriangle::OnInit(){
 
 
 //Frame update about data
-void SampleTriangle::OnUpdate(){
+void Renderer::OnUpdate(){
 	//update curr index and curr ptr.
 	m_currFrameResourceIndex = (m_currFrameResourceIndex + 1) % gNumFrameResources;
 	m_currFrameResource = m_frameResources[m_currFrameResourceIndex].get();
@@ -38,7 +38,7 @@ void SampleTriangle::OnUpdate(){
 }
 
 //Frame update about render command release,the data based OnUpdate.
-void SampleTriangle::OnRender()
+void Renderer::OnRender()
 {
 	//prepare command list to render.
 	PopulateCommandList();
@@ -55,7 +55,7 @@ void SampleTriangle::OnRender()
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
-void SampleTriangle::OnDestroy()
+void Renderer::OnDestroy()
 {
 	WaitForPreviousFrame();
 
@@ -71,7 +71,7 @@ void SampleTriangle::OnDestroy()
 
 
 //Step 1 :pipeline init
-void SampleTriangle::LoadPipeline()
+void Renderer::LoadPipeline()
 {
 	UINT dxgiFactoryFlags = 0;   
 
@@ -186,7 +186,7 @@ void SampleTriangle::LoadPipeline()
 }
 
 //Load Assets.
-void SampleTriangle::LoadAssets()
+void Renderer::LoadAssets()
 {
 	//create and init root signature.
 	{
@@ -350,7 +350,7 @@ void SampleTriangle::LoadAssets()
 }
 
 
-void SampleTriangle::PopulateCommandList()
+void Renderer::PopulateCommandList()
 {
 	//reset allocator and list
 	ThrowIfFailed(m_currFrameResource->m_commandAllocator->Reset());
@@ -403,7 +403,7 @@ void SampleTriangle::PopulateCommandList()
 	ThrowIfFailed(m_commandList->Close());
 }
 
-void SampleTriangle::WaitForPreviousFrame()
+void Renderer::WaitForPreviousFrame()
 {
 	const UINT64 fence = m_fenceValue;
 	ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), fence));
@@ -417,7 +417,7 @@ void SampleTriangle::WaitForPreviousFrame()
 	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
-void SampleTriangle::LoadImgui(){
+void Renderer::LoadImgui(){
 	// 检查版本并创建上下文
 	IMGUI_CHECKVERSION(); 
 	ImGui::CreateContext(); 
@@ -451,7 +451,7 @@ void SampleTriangle::LoadImgui(){
 	ImGui_ImplDX12_Init(&init_info); 
 }
 
-void SampleTriangle::UpdateImgui() {
+void Renderer::UpdateImgui() {
 	//about imgui component update.
 	// 开启 Dear ImGui 的新帧
 	ImGui_ImplDX12_NewFrame();
@@ -467,7 +467,7 @@ void SampleTriangle::UpdateImgui() {
 	ImGui::Render();
 }
 
-void SampleTriangle::BuildFrameResources() {
+void Renderer::BuildFrameResources() {
 	//create frame resource and add to vector.
 	for (int i = 0; i < gNumFrameResources; i++) {
 		m_frameResources.push_back(std::make_unique<FrameResource>(m_device.Get(), 1, 1, 1));
